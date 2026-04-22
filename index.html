@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VConnect Dashboard</title>
+</head>
+<body>
+
+  <h1>Sensor Data Dashboard</h1>
+
+  <!-- Send data -->
+  <button onclick="sendData()">Send Data</button>
+
+  <!-- Get latest data -->
+  <button onclick="getData()">Get Latest Data</button>
+
+  <!-- Display output -->
+  <p id="output">No data yet</p>
+
+  <script>
+    async function sendData() {
+      const response = await fetch('http://localhost:3000/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pir_motion: true,
+          ir_proximity_cm: 12,
+          mq135_gas_ppm: 250
+        })
+      })
+
+      const result = await response.json()
+      console.log("POST result:", result)
+      alert("Data sent!")
+    }
+
+    async function getData() {
+      try {
+        const res = await fetch('http://localhost:3000/data')
+        const data = await res.json()
+
+        console.log("GET result:", data)
+
+        document.getElementById('output').innerText =
+          `Gas: ${data.mq135_gas_ppm}, Distance: ${data.ir_proximity_cm}, Motion: ${data.pir_motion}`
+
+      } catch (err) {
+        console.error(err)
+        document.getElementById('output').innerText = "Error fetching data"
+      }
+    }
+  </script>
+
+</body>
+</html>
