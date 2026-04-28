@@ -13,20 +13,25 @@
   <!-- Get latest data -->
   <button onclick="getData()">Get Latest Data</button>
 
+  <!-- Auto refresh -->
+  <button onclick="startAutoRefresh()">Start Live Mode</button>
+
   <!-- Display output -->
   <p id="output">No data yet</p>
 
   <script>
+    const BASE_URL = "https://joe-backend-61qy.onrender.com/" // 🔥 CHANGE THIS
+
     async function sendData() {
-      const response = await fetch('http://localhost:3000/data', {
+      const response = await fetch(`${BASE_URL}/data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           pir_motion: true,
-          ir_proximity_cm: 12,
-          mq135_gas_ppm: 250
+          ir_proximity_cm: Math.floor(Math.random() * 100),
+          mq135_gas_ppm: Math.floor(Math.random() * 500)
         })
       })
 
@@ -37,18 +42,27 @@
 
     async function getData() {
       try {
-        const res = await fetch('http://localhost:3000/data')
+        const res = await fetch(`${BASE_URL}/data`)
         const data = await res.json()
 
         console.log("GET result:", data)
 
+        // 👇 handle array or object safely
+        const latest = Array.isArray(data) ? data[0] : data
+
         document.getElementById('output').innerText =
-          `Gas: ${data.mq135_gas_ppm}, Distance: ${data.ir_proximity_cm}, Motion: ${data.pir_motion}`
+          `Gas: ${latest.mq135_gas_ppm}, Distance: ${latest.ir_proximity_cm}, Motion: ${latest.pir_motion}`
 
       } catch (err) {
         console.error(err)
         document.getElementById('output').innerText = "Error fetching data"
       }
+    }
+
+    // 🔥 AUTO LIVE MODE (updates every 3 sec)
+    function startAutoRefresh() {
+      setInterval(getData, 3000)
+      alert("Live mode started 🚀")
     }
   </script>
 
