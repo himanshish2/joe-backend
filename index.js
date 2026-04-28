@@ -8,6 +8,12 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// 🔍 Debug: log every incoming request
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`)
+  next()
+})
+
 console.log("URL:", process.env.SUPABASE_URL)
 console.log("KEY exists:", !!process.env.SUPABASE_KEY)
 
@@ -28,9 +34,7 @@ app.post('/api/washroom/data', async (req, res) => {
 
     const { error: insertError } = await supabase
       .from('sensor_readings')
-      .insert([
-        { pir_motion, ir_proximity_cm, mq135_gas_ppm }
-      ])
+      .insert([{ pir_motion, ir_proximity_cm, mq135_gas_ppm }])
 
     if (insertError) {
       console.error("Insert error:", insertError)
@@ -81,9 +85,18 @@ app.get('/api/washroom/data', async (req, res) => {
   }
 })
 
-// ❗ FIX FOR RENDER (VERY IMPORTANT)
+// ❗ catch-all route (VERY IMPORTANT for debugging 404)
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found",
+    method: req.method,
+    url: req.url
+  })
+})
+
+// ✅ Render port fix
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`)
 })
