@@ -27,35 +27,29 @@ app.get('/', (req, res) => {
   res.send('Backend working 🚀')
 })
 
-// ✅ POST: insert sensor data
+
+// ✅ POST: insert washroom data (FIXED)
 app.post('/api/washroom/data', async (req, res) => {
   try {
-    const { pir_motion, ir_proximity_cm, mq135_gas_ppm } = req.body
+    const payload = req.body
 
-    const { error: insertError } = await supabase
-      .from('sensor_readings')
-      .insert([{ pir_motion, ir_proximity_cm, mq135_gas_ppm }])
+    console.log("🔥 Incoming:", payload)
 
-    if (insertError) {
-      console.error("Insert error:", insertError)
-      return res.status(500).json(insertError)
-    }
+    const { data, error } = await supabase
+      .from('frontend_readings') // ✅ YOUR TABLE
+      .insert([payload])
+      .select()
 
-    const { data, error: fetchError } = await supabase
-      .from('sensor_readings')
-      .select('*')
-      .order('id', { ascending: false })
-      .limit(1)
-      .single()
+    console.log("📦 Supabase data:", data)
+    console.log("❌ Supabase error:", error)
 
-    if (fetchError) {
-      console.error("Fetch error:", fetchError)
-      return res.status(500).json(fetchError)
+    if (error) {
+      return res.status(500).json({ error: error.message })
     }
 
     res.json({
       success: true,
-      data: data
+      data: data[0]
     })
 
   } catch (err) {
@@ -64,17 +58,18 @@ app.post('/api/washroom/data', async (req, res) => {
   }
 })
 
-// ✅ GET: fetch ALL sensor data
+
+// ✅ GET: fetch ALL washroom data (FIXED)
 app.get('/api/washroom/data', async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from('sensor_readings')
+      .from('frontend_readings') // ✅ SAME TABLE
       .select('*')
-      .order('id', { ascending: false })
+      .order('timestamp', { ascending: false })
 
     if (error) {
       console.error("Fetch error:", error)
-      return res.status(500).json(error)
+      return res.status(500).json({ error: error.message })
     }
 
     res.json(data)
@@ -85,7 +80,8 @@ app.get('/api/washroom/data', async (req, res) => {
   }
 })
 
-// ❗ catch-all route (VERY IMPORTANT for debugging 404)
+
+// ❗ catch-all route
 app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
@@ -94,7 +90,6 @@ app.use((req, res) => {
   })
 })
 
-// ✅ Render port fix
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, '0.0.0.0', () => {

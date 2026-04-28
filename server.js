@@ -1,26 +1,68 @@
-const express = require('express');
-const app = express();
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+const { createClient } = require("@supabase/supabase-js"); // ✅ added
 
-// ✅ Middleware to read JSON
+const app = express();
+app.use(cors());
 app.use(express.json());
 
-// ✅ Test route
-app.get('/', (req, res) => {
-    res.send("Backend is working");
+// ✅ Supabase config
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
 });
 
-// ✅ Your required POST route
-app.post('/api/washroom/data', (req, res) => {
-    console.log("Data received:", req.body);
+// store latest data
+let latestData = null;
 
-    res.status(200).json({
-        message: "Data received successfully"
-    });
+// ✅ POST route (FIXED)
+app.post("/api/washroom/data", async (req, res) => {
+  try {
+    const payload = req.body;
+
+    // ✅ INSERT into YOUR correct table
+    const { data, error } = await supabase
+      .from("frontend_readings") // 🔥 FIXED TABLE NAME
+      .insert([payload])
+      .select();
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    // ✅ store latest data
+    latestData = data[0];
+
+    // ✅ broadcast to frontend (real-time ready)
+    io.emit("sensor-update", latestData);
+
+    res.json({ success: true, data: latestData });
+
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// GET latest data
+app.get("/api/washroom/data", (req, res) => {
+  res.json(latestData);
 });
 
-// ❗ IMPORTANT FIX for Render
-const PORT = process.env.PORT || 3000;
+// socket connection
+io.on("connection", (socket) => {
+  console.log("Frontend connected");
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  if (latestData) {
+    socket.emit("sensor-update", latestData);
+  }
 });
+
+server.listen(5000, () => console.log("Server running on 5000"));
