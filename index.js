@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 })
 
 // ✅ POST: insert sensor data
-app.post('/data', async (req, res) => {
+app.post('/api/washroom/data', async (req, res) => {
   try {
     const { pir_motion, ir_proximity_cm, mq135_gas_ppm } = req.body
 
@@ -60,9 +60,8 @@ app.post('/data', async (req, res) => {
   }
 })
 
-
-// ✅ GET: fetch ALL sensor data (THIS WAS MISSING)
-app.get('/data', async (req, res) => {
+// ✅ GET: fetch ALL sensor data
+app.get('/api/washroom/data', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('sensor_readings')
@@ -82,6 +81,9 @@ app.get('/data', async (req, res) => {
   }
 })
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000')
+// ❗ FIX FOR RENDER (VERY IMPORTANT)
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
 })
