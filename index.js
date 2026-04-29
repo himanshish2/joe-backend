@@ -31,6 +31,7 @@ app.get('/', (req, res) => {
 // ✅ POST: insert washroom data (FIXED)
 app.post('/api/washroom/data', async (req, res) => {
   try {
+    console.log("Incoming payload:", req.body);
     const payload = req.body
 
     console.log("🔥 Incoming:", payload)

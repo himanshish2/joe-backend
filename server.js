@@ -25,6 +25,7 @@ let latestData = null;
 // ✅ POST route (FIXED)
 app.post("/api/washroom/data", async (req, res) => {
   try {
+    console.log("Incoming payload:", req.body);
     const payload = req.body;
 
     // ✅ INSERT into YOUR correct table
